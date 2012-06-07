@@ -1,0 +1,2 @@
+﻿select CustomerID, Name, Phone
+from Customer
