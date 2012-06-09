@@ -8,17 +8,22 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimpleORM;
+using SimpleORM.Extensions;
 using SimpleORMTests.Entities;
+using SimpleORMTests.Helper;
 
 namespace SimpleORMTests
 {
 	[TestClass]
 	public class QueryTests
 	{
+		#region Constants
 		private const string DATABASE_PATH = @"..\\..\\Database\Database.mdf";
 		private const string CONNECTION_STRING = @"Data Source=(LocalDB)\v11.0;AttachDbFilename={0};Integrated Security=True;Connect Timeout=30";
-		private const string QUERIES_DIRECTORY = "..\\..\\Queries";
+		private const string QUERIES_DIRECTORY = "..\\..\\Queries";		
+		#endregion
 
+		#region Helpers
 		private static string GetConnectionString()
 		{
 			return string.Format(CONNECTION_STRING, Path.GetFullPath(DATABASE_PATH));
@@ -43,6 +48,7 @@ namespace SimpleORMTests
 			}
 			return true;
 		}
+		#endregion
 
 		#region DatabaseAccessTest
 		[TestMethod]
@@ -69,23 +75,41 @@ namespace SimpleORMTests
 		}
 		#endregion
 
+		// TODO after insert, edit, delete each tests... truncate each database table and reinsert data
+		// use the TestData class methods to get the data for the tables
+
 		[TestMethod]
 		public void SelectTest_Simple()
 		{
-			using (var qry = new Query<Customer>())
+			using (var qry = new Query<Customer>(GetConnectionString()))
 			{
-				var methodName = MethodBase.GetCurrentMethod().Name;
 				var result = qry.SelectToList();
+				var methodName = MethodBase.GetCurrentMethod().Name;
 				var expectedQuery = GetQueryText(methodName);
 				Assert.IsTrue(CompareText(expectedQuery, qry.SqlQuery, methodName));
-				Assert.AreEqual(2, result.Count);
-				// TODO need a helper method to compare collections
+				Assert.IsTrue(TestData.GetCustomers().ItemsAreEqualTo(result));
 			}
 		}
 		[TestMethod]
 		public void SelectTest_WithWhere()
 		{
 			// TODO
+
+			// c.CustomerID == 1
+			// c.CustomerID != 1
+			// c.CustomerID > 1
+			// c.CustomerID < 1
+			// c.CustomerID >= 1
+			// c.CustomerID <= 1
+
+			// TODO string where operators
+
+			// contains
+			// ==
+			// !=
+			// starts with
+			// ends with
+
 		}
 		[TestMethod]
 		public void SelectTest_WithOrderBy()
