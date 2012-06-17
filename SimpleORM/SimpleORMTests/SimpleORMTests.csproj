@@ -69,6 +69,7 @@
   <ItemGroup>
     <Content Include="Database\Database.mdf" />
     <Content Include="Queries\SelectTest_Simple.txt" />
+    <Content Include="Queries\SelectTest_WithWhere.txt" />
   </ItemGroup>
   <ItemGroup />
   <Choose>

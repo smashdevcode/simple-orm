@@ -78,6 +78,10 @@ namespace SimpleORMTests
 		// TODO after insert, edit, delete each tests... truncate each database table and reinsert data
 		// use the TestData class methods to get the data for the tables
 
+		// TODO setup tests that exercise specific exception messages or types
+		// i.e. can't find a column in an entity when populating an entity
+		// or can't find a column in a database table when executing a query
+
 		[TestMethod]
 		public void SelectTest_Simple()
 		{
@@ -93,7 +97,15 @@ namespace SimpleORMTests
 		[TestMethod]
 		public void SelectTest_WithWhere()
 		{
-			// TODO
+			using (var qry = new Query<Customer>(GetConnectionString()))
+			{
+				var result = qry.Where(c => c.CustomerID == 1).SelectToList();
+				var methodName = MethodBase.GetCurrentMethod().Name;
+				var expectedQuery = GetQueryText(methodName);
+				Assert.IsTrue(CompareText(expectedQuery, qry.SqlQuery, methodName));
+				// TODO compare collections
+				//Assert.IsTrue(TestData.GetCustomers().ItemsAreEqualTo(result));
+			}
 
 			// c.CustomerID == 1
 			// c.CustomerID != 1

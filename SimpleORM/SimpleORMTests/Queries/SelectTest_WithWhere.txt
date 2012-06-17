@@ -1,0 +1,3 @@
+﻿select CustomerID, Name, Phone
+from Customer
+where (CustomerID = @CustomerID)
