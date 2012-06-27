@@ -15,7 +15,7 @@ namespace SimpleORM
 		private Db _db = null;
 		private List<Expression<Func<T, bool>>> _whereExpressions = null;
 
-		public string SqlQuery { get; private set; }
+		public QueryStatement<T> QueryStatement { get; private set; }
 
 		// TODO setup default constructor that looks for a "SimpleORM" connection string in the configuration file
 
@@ -30,9 +30,13 @@ namespace SimpleORM
 		//{
 		//	return this;
 		//}
+		public T SelectToSingle()
+		{
+			return _db.ExecuteReaderToSingle<T>(this.GetQueryStatement());
+		}
 		public List<T> SelectToList()
 		{
-			return _db.ExecuteReaderToList<T>(this.BuildQuery());
+			return _db.ExecuteReaderToList<T>(this.GetQueryStatement());
 		}
 		public Query<T> Where(Expression<Func<T, bool>> whereExpression)
 		{
@@ -40,7 +44,9 @@ namespace SimpleORM
 			return this;
 		}
 
-		private string BuildQuery()
+		// TODO move all query statement building into the QueryStatement class
+
+		private QueryStatement<T> GetQueryStatement()
 		{
 			var genericType = this.GetType().GetGenericArguments()[0];
 
@@ -65,46 +71,23 @@ namespace SimpleORM
 			select.AppendFormat("select {0}{1}", selectList, Environment.NewLine);
 			select.AppendFormat("from {0}", fromClause);
 			if (!string.IsNullOrWhiteSpace(whereClause))
-				select.AppendFormat("where {0}", whereClause);
-			this.SqlQuery = select.ToString();
-			return this.SqlQuery;
-		}
-		private static string BuildWhereClause(List<Expression<Func<T, bool>>> whereExpressions)
-		{
-			var whereClause = new StringBuilder();
-			foreach (var whereExpression in whereExpressions)
 			{
-				// TODO need to handle different setups
-				// TODO combine where clauses that have the same column name and operator
-				// i.e. "(CustomerID = 1 or CustomerID = 2) and (CustomerID != 1 and CustomerID != 2)"
-
-				// TODO read chapter from Microsoft LINQ book about expression trees
-				// need to learn how to handle different types of expression types
-
-				var body = (BinaryExpression)whereExpression.Body;
-				var left = (ParameterExpression)body.Left;
-				var nodeType = body.NodeType;
-				var right = (ConstantExpression)body.Right;
-
-				string operatorString = null;
-				switch (nodeType)
-				{
-					case ExpressionType.Equal:
-						operatorString = "=";
-						break;
-					default:
-						throw new ApplicationException("Unexpected Expression NodeType: " + nodeType.ToString());
-				}
-
+				select.Append(Environment.NewLine);
+				select.AppendFormat("where {0}", whereClause);
 			}
-			return whereClause.ToString();
-		}
 
-		private class WhereClauseSegment
-		{
-			public string ColumnName { get; set; }
-			public OperatorType Operator { get; set; }
-			public object Value { get; set; }
+			// setup the query command
+			var queryStatement = new QueryStatement();
+			queryStatement.SqlQuery = select.ToString();
+
+			// TODO setup the query command parameters
+	
+
+
+
+			
+			this.QueryStatement = queryStatement;
+			return queryStatement;
 		}
 
 		public void Dispose()

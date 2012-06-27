@@ -90,7 +90,7 @@ namespace SimpleORMTests
 				var result = qry.SelectToList();
 				var methodName = MethodBase.GetCurrentMethod().Name;
 				var expectedQuery = GetQueryText(methodName);
-				Assert.IsTrue(CompareText(expectedQuery, qry.SqlQuery, methodName));
+				Assert.IsTrue(CompareText(expectedQuery, qry.QueryStatement.SqlQuery, methodName));
 				Assert.IsTrue(TestData.GetCustomers().ItemsAreEqualTo(result));
 			}
 		}
@@ -99,12 +99,14 @@ namespace SimpleORMTests
 		{
 			using (var qry = new Query<Customer>(GetConnectionString()))
 			{
-				var result = qry.Where(c => c.CustomerID == 1).SelectToList();
+				var result = qry.Where(c => c.CustomerID == 1).SelectToSingle();
 				var methodName = MethodBase.GetCurrentMethod().Name;
 				var expectedQuery = GetQueryText(methodName);
-				Assert.IsTrue(CompareText(expectedQuery, qry.SqlQuery, methodName));
-				// TODO compare collections
-				//Assert.IsTrue(TestData.GetCustomers().ItemsAreEqualTo(result));
+				Assert.IsTrue(CompareText(expectedQuery, qry.QueryStatement.SqlQuery, methodName));
+				Assert.IsTrue(result is Customer);
+				Assert.AreEqual(1, result.CustomerID);
+				Assert.AreEqual("Test Customer 1", result.Name);
+				Assert.AreEqual("555-555-5555", result.Phone);
 			}
 
 			// c.CustomerID == 1

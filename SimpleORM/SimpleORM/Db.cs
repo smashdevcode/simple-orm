@@ -19,18 +19,50 @@ namespace SimpleORM
 			_connectionString = connectionString;
 		}
 
-		public List<T> ExecuteReaderToList<T>(string sqlQuery)
+		public T ExecuteReaderToSingle<T>(QueryStatement<T> queryCommand)
 		{
-			var list = new List<T>();
-			var itemType = typeof(T);
+			var item = default(T);
 			using (var conn = new SqlConnection(_connectionString))
 			{
 				conn.Open();
-				using (var cmd = new SqlCommand(sqlQuery, conn))
+				using (var cmd = new SqlCommand(queryCommand.SqlQuery, conn))
 				{
 					var reader = cmd.ExecuteReader();
 					var columnNames = (from row in reader.GetSchemaTable().AsEnumerable()
 									   select row.Field<string>("ColumnName")).ToList();
+					var itemType = typeof(T);
+					var count = 0;
+					while (reader.Read())
+					{
+						if (count > 0)
+							throw new ApplicationException("More than one item was returned for the query: " + 
+								queryCommand.SqlQuery);
+						item = Activator.CreateInstance<T>();
+						(from columnName in columnNames select columnName).
+							ToList().ForEach(columnName =>
+							{
+								var property = itemType.GetProperty(columnName);
+								if (property != null)
+									property.SetValue(item, reader[columnName]);
+							});
+						count++;
+					}
+				}
+			}
+			return item;
+		}
+		public List<T> ExecuteReaderToList<T>(QueryStatement<T> queryCommand)
+		{
+			var list = new List<T>();
+			using (var conn = new SqlConnection(_connectionString))
+			{
+				conn.Open();
+				using (var cmd = new SqlCommand(queryCommand.SqlQuery, conn))
+				{
+					var reader = cmd.ExecuteReader();
+					var columnNames = (from row in reader.GetSchemaTable().AsEnumerable()
+									   select row.Field<string>("ColumnName")).ToList();
+					var itemType = typeof(T);
 					while (reader.Read())
 					{
 						var item = Activator.CreateInstance<T>();
